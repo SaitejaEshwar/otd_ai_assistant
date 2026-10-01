@@ -2,9 +2,9 @@
 
 A personal offline task assistant, developed on Windows for eventual deployment to a Raspberry Pi 5, 5-inch touchscreen, and AI HAT+ 2.
 
-## Current milestone: project setup
+## Current milestone: task management
 
-Includes FastAPI, a typed health API, a TypeScript/Vite starter screen, local configuration, and Windows scripts. Task storage, reminders, voice, and language models are not implemented yet. No cloud service or API key is required.
+Includes FastAPI, persistent SQLite task management, one-time/daily/weekly schedules, completion history, a TypeScript/Vite starter screen, local configuration, and Windows scripts. The task dashboard, reminder delivery, voice, and language models are not implemented yet. No cloud service or API key is required. See [the task API guide](docs/task-management.md) for request examples and schedule behavior.
 
 ## Windows setup
 
@@ -36,6 +36,7 @@ Edit root `.env`; environment variables take precedence. Restart processes after
 | `OTD_HOST` | `127.0.0.1` | Loopback address; LAN access is disabled. |
 | `OTD_PORT` | `8000` | API and built frontend port. |
 | `OTD_TIMEZONE` | `America/Chicago` | IANA time zone for future task scheduling. |
+| `OTD_DATABASE_PATH` | `data/tasks.sqlite3` | SQLite file; relative paths resolve from the repository root. |
 
 Local configuration, databases, recordings, downloaded models, environments, and build output are ignored by Git. No secrets belong in source control.
 
@@ -61,7 +62,9 @@ Frontend dependency versions are locked in `frontend/pnpm-lock.yaml`. Python dep
 
 ```text
 backend/src/otd_assistant/   Configuration, application factory, launcher
-backend/tests/             API/static serving and configuration checks
+backend/src/otd_assistant/tasks/  Task API, SQLite repository, recurrence calculations
+backend/tests/             API, persistence, validation, and recurrence checks
+docs/                      Task API usage and behavior
 frontend/src/              TypeScript and CSS
 scripts/                   Windows setup and startup
 .env.example               Non-secret configuration template

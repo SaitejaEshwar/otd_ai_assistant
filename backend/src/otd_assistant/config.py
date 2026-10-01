@@ -14,6 +14,12 @@ class Settings(BaseSettings):
     host: str = "127.0.0.1"
     port: int = Field(default=8000, ge=1, le=65535)
     timezone: str = "America/Chicago"
+    database_path: Path = PROJECT_ROOT / "data" / "tasks.sqlite3"
+
+    @field_validator("database_path")
+    @classmethod
+    def resolve_database_path(cls, value: Path) -> Path:
+        return value if value.is_absolute() else PROJECT_ROOT / value
 
     @field_validator("host")
     @classmethod
@@ -27,6 +33,6 @@ class Settings(BaseSettings):
     def valid_timezone(cls, value: str) -> str:
         try:
             ZoneInfo(value)
-        except ZoneInfoNotFoundError as exc:
+        except (ZoneInfoNotFoundError, ValueError) as exc:
             raise ValueError("Use a valid IANA time zone, such as America/Chicago") from exc
         return value
