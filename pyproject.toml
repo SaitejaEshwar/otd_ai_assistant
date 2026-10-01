@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "otd-ai-assistant"
+version = "0.1.0"
+description = "An offline desktop task assistant for Windows and Raspberry Pi"
+requires-python = ">=3.11"
+dependencies = ["fastapi>=0.115,<1", "uvicorn>=0.34,<1", "pydantic-settings>=2.7,<3", "tzdata>=2025.1"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<10", "httpx>=0.28,<1"]
+
+[tool.setuptools.packages.find]
+where = ["backend/src"]
+
+[tool.pytest.ini_options]
+testpaths = ["backend/tests"]
