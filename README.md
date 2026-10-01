@@ -2,9 +2,9 @@
 
 A personal offline task assistant, developed on Windows for eventual deployment to a Raspberry Pi 5, 5-inch touchscreen, and AI HAT+ 2.
 
-## Current milestone: task management
+## Current milestone: reliable reminders
 
-Includes FastAPI, persistent SQLite task management, one-time/daily/weekly schedules, completion history, a TypeScript/Vite starter screen, local configuration, and Windows scripts. The task dashboard, reminder delivery, voice, and language models are not implemented yet. No cloud service or API key is required. See [the task API guide](docs/task-management.md) for request examples and schedule behavior.
+Includes an 800 × 480 touchscreen dashboard, reviewed task forms, typed drafts, SQLite task storage, one-time/daily/weekly schedules, and persistent visual reminders with Done, Snooze, and Dismiss controls. Voice capture/transcription and language models are not implemented yet; the talk control is visibly unavailable. No cloud service or API key is required. See the [reminder guide](docs/reminders.md), [touchscreen guide](docs/touchscreen-interface.md), and [task API guide](docs/task-management.md).
 
 ## Windows setup
 
@@ -18,6 +18,8 @@ From the repository root on `feature/Initial_version_v1`:
 ```
 
 Open http://127.0.0.1:8000. Stop with Ctrl+C. API documentation: http://127.0.0.1:8000/docs. Startup serves the built frontend and API together and needs no downloads.
+
+If PowerShell blocks `.ps1` scripts, an already installed environment can be started directly with `.\.venv\Scripts\python.exe -m otd_assistant`; no execution-policy change is needed.
 
 If tools are not on PATH, pass their executable paths:
 
@@ -37,6 +39,7 @@ Edit root `.env`; environment variables take precedence. Restart processes after
 | `OTD_PORT` | `8000` | API and built frontend port. |
 | `OTD_TIMEZONE` | `America/Chicago` | IANA time zone for future task scheduling. |
 | `OTD_DATABASE_PATH` | `data/tasks.sqlite3` | SQLite file; relative paths resolve from the repository root. |
+| `OTD_REMINDERS_ENABLED` | `true` | Run the independent reminder scheduler. Use `false` for tests/maintenance. |
 
 Local configuration, databases, recordings, downloaded models, environments, and build output are ignored by Git. No secrets belong in source control.
 

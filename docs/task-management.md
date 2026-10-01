@@ -1,6 +1,6 @@
 # Task management
 
-This milestone implements the local task API and durable storage. The home screen is still the starter page; task controls and reminder delivery are separate milestones. Use the interactive API documentation at `http://127.0.0.1:8000/docs` or the PowerShell examples below.
+The local task API and durable storage support the touchscreen dashboard at `http://127.0.0.1:8000/`, including [persistent visual reminders](reminders.md). Use the interactive API documentation at `http://127.0.0.1:8000/docs` or the PowerShell examples below for direct API access.
 
 ## Endpoints
 
@@ -13,8 +13,11 @@ This milestone implements the local task API and durable storage. The home scree
 | POST | `/api/tasks/{id}/complete` | Complete a task or its current recurring occurrence. |
 | GET | `/api/tasks/{id}/completions` | Read occurrence completion history, newest first. |
 | DELETE | `/api/tasks/{id}` | Permanently delete a task and its history (204). |
+| POST | `/api/schedules/preview` | Resolve a local date/time in a selected time zone without saving a task. |
 
 Unknown task IDs return 404; invalid requests return 422. Conflicting completion or rescheduling requests return 409. Unexpected input fields are rejected.
+
+Schedule preview accepts `kind`, an offset-free `local_start` (for example `2026-10-03T09:00`), and an IANA `timezone`. It returns a resolved schedule accepted by task creation. Spring-forward nonexistent inputs return 422; fall-back overlaps choose the first occurrence. This differs deliberately from recurring gap handling: the user can clarify an invalid initial wall time, while future recurring occurrences shift as documented below.
 
 ## Try a task
 
@@ -77,4 +80,4 @@ The database is created at application startup. `OTD_DATABASE_PATH` defaults to 
 
 Writes use SQLite transactions; completing and advancing a repeating task happens atomically. Connections close after every operation. To back up or transfer data, stop the application, copy the SQLite file, then restart. Both Windows and Pi use the same schema. Keep personal task data out of Git; the default `data/` directory is ignored. If you configure a path elsewhere inside the repository, add that location to `.gitignore`.
 
-The reminder scheduler and delivery history will be added in the reminder milestone. No alerts are emitted by this API yet.
+The reminder scheduler scans due tasks independently. Completing a task also retires its pending reminder in the same transaction. Replacing/removing a schedule cancels its old alert and starts a new schedule generation; deleting a task removes its reminder history. See [reminder behavior](reminders.md).

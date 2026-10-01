@@ -26,6 +26,7 @@ def timestamp(value: datetime) -> str:
 
 def task_from_row(row: sqlite3.Row) -> Task:
     values = dict(row)
+    values.pop("schedule_version", None)
     values["schedule"] = json.loads(values.pop("schedule_json")) if row["schedule_json"] else None
     return Task.model_validate(values)
 
@@ -55,7 +56,7 @@ class TaskStore:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with self.connection(write=True) as db:
             version = db.execute("PRAGMA user_version").fetchone()[0]
-            if version not in (0, 1):
+            if version not in (0, 1, 2):
                 raise RuntimeError(f"Unsupported task database schema version: {version}")
             db.execute("""CREATE TABLE IF NOT EXISTS tasks (
                 id TEXT PRIMARY KEY, title TEXT NOT NULL, notes TEXT NOT NULL,
@@ -70,7 +71,18 @@ class TaskStore:
             )""")
             db.execute("CREATE INDEX IF NOT EXISTS tasks_due ON tasks(status, next_due_at)")
             db.execute("CREATE INDEX IF NOT EXISTS completions_task ON completions(task_id, completed_at)")
-            db.execute("PRAGMA user_version = 1")
+            if version < 2:
+                db.execute("ALTER TABLE tasks ADD COLUMN schedule_version INTEGER NOT NULL DEFAULT 0")
+            db.execute("""CREATE TABLE IF NOT EXISTS reminders (
+                id TEXT PRIMARY KEY, task_id TEXT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+                schedule_version INTEGER NOT NULL, due_at TEXT NOT NULL, wake_at TEXT NOT NULL,
+                state TEXT NOT NULL CHECK(state IN ('pending','done','dismissed','cancelled')),
+                version INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL,
+                presented_at TEXT, acted_at TEXT,
+                UNIQUE(task_id, schedule_version, due_at)
+            )""")
+            db.execute("CREATE INDEX IF NOT EXISTS reminder_wake ON reminders(state, wake_at)")
+            db.execute("PRAGMA user_version = 2")
 
     @staticmethod
     def require(db: sqlite3.Connection, task_id: str) -> Task:
@@ -87,7 +99,7 @@ class TaskStore:
         schedule = normalized_schedule(payload.schedule, self.timezone) if payload.schedule else None
         task_id = str(uuid4())
         with self.connection(write=True) as db:
-            db.execute("INSERT INTO tasks VALUES (?, ?, ?, 'open', ?, ?, ?, ?, NULL)", (
+            db.execute("INSERT INTO tasks (id,title,notes,status,schedule_json,next_due_at,created_at,updated_at,completed_at) VALUES (?, ?, ?, 'open', ?, ?, ?, ?, NULL)", (
                 task_id, payload.title, payload.notes,
                 schedule.model_dump_json() if schedule else None,
                 timestamp(schedule.starts_at) if schedule else None, timestamp(now), timestamp(now),
@@ -126,6 +138,8 @@ class TaskStore:
                     raise TaskConflict("Cannot reschedule a completed task; create a new task instead")
                 schedule = normalized_schedule(payload.schedule, self.timezone) if payload.schedule else None
                 due = schedule.starts_at if schedule else None
+                db.execute("UPDATE tasks SET schedule_version = schedule_version + 1 WHERE id = ?", (task_id,))
+                db.execute("UPDATE reminders SET state = 'cancelled', acted_at = ? WHERE task_id = ? AND state = 'pending'", (timestamp(now), task_id))
             updated = max(now, task.updated_at + timedelta(microseconds=1))
             db.execute("""UPDATE tasks SET title = ?, notes = ?, schedule_json = ?,
                 next_due_at = ?, updated_at = ? WHERE id = ?""", (
@@ -138,24 +152,28 @@ class TaskStore:
 
     def complete(self, task_id: str, expected_updated_at: datetime, now: datetime) -> Task:
         with self.connection(write=True) as db:
-            task = self.require(db, task_id)
-            if task.status == "completed":
-                return task
-            if task.updated_at != expected_updated_at:
-                raise TaskConflict("Task changed; reload it before completing")
-            due = task.next_due_at
-            db.execute("INSERT INTO completions VALUES (?, ?, ?, ?)", (
-                str(uuid4()), task_id, timestamp(due) if due else None, timestamp(now),
-            ))
-            repeating = task.schedule is not None and task.schedule.kind != "once"
-            next_due = next_occurrence(task.schedule, max(now, due)) if repeating else due
-            updated = max(now, task.updated_at + timedelta(microseconds=1))
-            db.execute("""UPDATE tasks SET status = ?, next_due_at = ?, updated_at = ?, completed_at = ?
-                WHERE id = ?""", (
-                "open" if repeating else "completed", timestamp(next_due) if next_due else None,
-                timestamp(updated), None if repeating else timestamp(now), task_id,
-            ))
-            return self.require(db, task_id)
+            return self.complete_in(db, task_id, expected_updated_at, now)
+
+    def complete_in(self, db: sqlite3.Connection, task_id: str, expected_updated_at: datetime, now: datetime) -> Task:
+        task = self.require(db, task_id)
+        if task.status == "completed":
+            return task
+        if task.updated_at != expected_updated_at:
+            raise TaskConflict("Task changed; reload it before completing")
+        due = task.next_due_at
+        db.execute("INSERT INTO completions VALUES (?, ?, ?, ?)", (
+            str(uuid4()), task_id, timestamp(due) if due else None, timestamp(now),
+        ))
+        repeating = task.schedule is not None and task.schedule.kind != "once"
+        next_due = next_occurrence(task.schedule, max(now, due)) if repeating else due
+        updated = max(now, task.updated_at + timedelta(microseconds=1))
+        db.execute("""UPDATE tasks SET status = ?, next_due_at = ?, updated_at = ?, completed_at = ?
+            WHERE id = ?""", (
+            "open" if repeating else "completed", timestamp(next_due) if next_due else None,
+            timestamp(updated), None if repeating else timestamp(now), task_id,
+        ))
+        db.execute("UPDATE reminders SET state = 'done', acted_at = ? WHERE task_id = ? AND state = 'pending'", (timestamp(now), task_id))
+        return self.require(db, task_id)
 
     def completions(self, task_id: str) -> list[Completion]:
         with self.connection() as db:

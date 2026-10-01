@@ -1,5 +1,6 @@
 from pathlib import Path
 from contextlib import asynccontextmanager
+import asyncio
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
@@ -8,6 +9,8 @@ from pydantic import BaseModel
 from .config import PROJECT_ROOT, Settings
 from .tasks.api import task_router
 from .tasks.store import TaskStore
+from .tasks.preview import router as schedule_router
+from .reminders import ReminderScheduler, ReminderStore, reminder_router
 
 
 class HealthResponse(BaseModel):
@@ -19,14 +22,24 @@ class HealthResponse(BaseModel):
 def create_app(settings: Settings | None = None, frontend_dir: Path | None = None) -> FastAPI:
     settings = settings or Settings()
     store = TaskStore(settings.database_path, settings.timezone)
+    reminders = ReminderStore(store)
+    scheduler = ReminderScheduler(reminders)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         store.initialize()
-        yield
+        worker = asyncio.create_task(scheduler.run()) if settings.reminders_enabled else None
+        try:
+            yield
+        finally:
+            scheduler.stop_event.set()
+            if worker:
+                await worker
 
     app = FastAPI(title="On the Desk AI Assistant", version="0.1.0", lifespan=lifespan)
     app.include_router(task_router(store))
+    app.include_router(schedule_router)
+    app.include_router(reminder_router(reminders, scheduler))
 
     @app.get("/api/health", response_model=HealthResponse)
     def health() -> HealthResponse:

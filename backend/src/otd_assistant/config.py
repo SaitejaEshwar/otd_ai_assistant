@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     port: int = Field(default=8000, ge=1, le=65535)
     timezone: str = "America/Chicago"
     database_path: Path = PROJECT_ROOT / "data" / "tasks.sqlite3"
+    reminders_enabled: bool = True
 
     @field_validator("database_path")
     @classmethod

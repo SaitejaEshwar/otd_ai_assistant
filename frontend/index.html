@@ -7,17 +7,63 @@
   </head>
   <body>
     <main id="app">
-      <header><span class="eyebrow">YOUR DESK ASSISTANT</span><span class="badge">Local prototype</span></header>
-      <h1>A little space for your day.</h1>
-      <p class="intro">On the Desk is getting ready.</p>
-      <section aria-labelledby="setup-title">
-        <h2 id="setup-title">Project setup</h2>
-        <p id="connection" role="status" aria-live="polite">Checking the local service…</p>
-        <p class="note">Task lists, reminders, and voice input will arrive in the next build stages.</p>
-        <button id="retry" type="button">Check connection</button>
+      <header class="topbar">
+        <div><span class="eyebrow">ON THE DESK</span><h1>A little space for your day.</h1></div>
+        <div class="clock"><time id="clock"></time><span id="connection" role="status">Connecting…</span></div>
+      </header>
+      <nav class="toolbar" aria-label="Task views">
+        <div class="tabs">
+          <button data-view="today" aria-pressed="true">Today</button>
+          <button data-view="upcoming" aria-pressed="false">Upcoming</button>
+          <button data-view="completed" aria-pressed="false">Completed</button>
+          <button data-view="all" aria-pressed="false">All</button>
+        </div>
+        <button id="add" class="primary">＋ Add task</button>
+      </nav>
+      <section id="reminders" class="reminders" aria-labelledby="reminder-title" hidden>
+        <button id="reminder-toggle" aria-expanded="true" aria-controls="reminder-list"><strong id="reminder-title" aria-live="polite">Reminders</strong><span>Show / hide</span></button>
+        <p id="reminder-error" class="error" role="alert" hidden></p>
+        <div id="reminder-list"></div>
       </section>
-      <footer>Built for your desk. Runs on your device.</footer>
+      <div class="workspace">
+        <section class="tasks-panel" aria-labelledby="list-title">
+          <div class="section-heading"><h2 id="list-title">Your focus today</h2><button id="refresh" class="quiet">Refresh</button></div>
+          <p id="error" class="error" role="alert" hidden></p>
+          <div id="task-list" class="task-list" aria-live="polite"></div>
+        </section>
+        <aside class="assistant-panel" aria-label="Desk assistant">
+          <span class="eyebrow">A MOMENT OF FOCUS</span>
+          <h2>One thing at a time.</h2>
+          <div class="next"><span class="muted">Next scheduled task</span><p id="next-task">Checking your list…</p><span class="muted">Desk reminders are active while the service runs.</span></div>
+          <p id="assistant-response" role="status">Type a task below, then choose its schedule.</p>
+          <span id="voice-state" class="voice-state">○ Microphone off · voice coming later</span>
+        </aside>
+      </div>
+      <footer>
+        <button id="talk" class="talk" aria-disabled="true" aria-describedby="voice-state">● Talk</button>
+        <form id="quick-add"><label class="sr-only" for="draft">Type a task</label><input id="draft" maxlength="200" placeholder="What would you like to get done?" autocomplete="off" required /><button class="primary" type="submit">Review</button></form>
+      </footer>
+      <div id="toast" role="status" class="toast" hidden></div>
     </main>
+    <dialog id="editor" aria-labelledby="editor-title">
+      <form id="task-form">
+        <div class="dialog-header"><h2 id="editor-title">Add a task</h2><button type="button" class="close" data-close="editor" aria-label="Close task form">×</button></div>
+        <div class="dialog-body">
+          <p id="draft-context" class="hint" hidden></p>
+          <label for="title">Task</label><input id="title" maxlength="200" required autocomplete="off" placeholder="What needs doing?" />
+          <label for="notes">Notes <span class="muted">(optional)</span></label><textarea id="notes" maxlength="5000" rows="2"></textarea>
+          <div class="form-grid"><div><label for="repeat">Schedule</label><select id="repeat"><option value="none">No schedule</option><option value="once">One time</option><option value="daily">Every day</option><option value="weekly">Every week</option></select></div><div id="date-field" hidden><label for="starts">First occurrence</label><input id="starts" type="datetime-local" /></div></div>
+          <div id="zone-field" hidden><label for="zone">Time zone</label><input id="zone" required placeholder="America/Chicago" /><p class="hint">Repeats keep this local time. Changing the schedule resets its next occurrence. An ambiguous fall-back time uses the first occurrence.</p></div>
+          <p id="form-error" class="error" role="alert" hidden></p>
+        </div>
+        <div class="dialog-footer"><button type="button" data-close="editor">Cancel</button><button id="review" class="primary" type="submit">Review task</button></div>
+      </form>
+    </dialog>
+    <dialog id="confirmation" aria-labelledby="confirmation-title">
+      <div class="dialog-header"><h2 id="confirmation-title">Review your task</h2><button type="button" class="close" data-close="confirmation" aria-label="Close confirmation">×</button></div>
+      <div class="dialog-body"><div id="summary"></div><p id="confirmation-error" class="error" role="alert" hidden></p></div>
+      <div class="dialog-footer"><button id="back" type="button">Back</button><button id="confirm" class="primary" type="button">Save task</button></div>
+    </dialog>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
