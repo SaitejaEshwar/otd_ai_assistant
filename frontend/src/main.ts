@@ -1,6 +1,6 @@
 import "./style.css";
 import { startReminders } from "./reminders";
-import { api, allTasks, type Task, type TaskInput, type Schedule } from "./api";
+import { ApiError, api, allTasks, type Task, type TaskInput, type Schedule } from "./api";
 
 const el = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 const editor = el<HTMLDialogElement>("editor");
@@ -20,6 +20,9 @@ let pending: (() => Promise<void>) | null = null;
 let busy = false;
 let refreshing = false;
 let loaded = false;
+let aiSession: string | null = null;
+let aiBusy = false;
+interface AssistantReply { session_id: string; kind: "clarification" | "proposal" | "answer" | "saved"; message: string; proposal_id?: string; action?: string; summary?: string[]; }
 let returnToEditor = false;
 let toastTimer: ReturnType<typeof setTimeout>;
 
@@ -142,7 +145,7 @@ function confirmComplete(task: Task): void {
 }
 function confirmDelete(task: Task): void {
   openConfirmation("Delete this task?", [task.title, "This permanently removes the task and its completion history."], "Delete task", async () => {
-    await api(`/api/tasks/${task.id}`, "DELETE"); notify("Task deleted.");
+    await api(`/api/tasks/${task.id}?expected_updated_at=${encodeURIComponent(task.updated_at)}`, "DELETE"); notify("Task deleted.");
   });
 }
 form.addEventListener("submit", async event => {
@@ -157,8 +160,9 @@ form.addEventListener("submit", async event => {
       payload.schedule = schedule;
     }
     const taskId = editing?.id;
+    const taskVersion = editing?.updated_at;
     openConfirmation(taskId ? "Review your changes" : "Ready to add this?", [payload.title, payload.notes, scheduleText(schedule)].filter(Boolean), taskId ? "Save changes" : "Add task", async () => {
-      await api(taskId ? `/api/tasks/${taskId}` : "/api/tasks", taskId ? "PATCH" : "POST", payload);
+      await api(taskId ? `/api/tasks/${taskId}?expected_updated_at=${encodeURIComponent(taskVersion!)}` : "/api/tasks", taskId ? "PATCH" : "POST", payload);
       el<HTMLInputElement>("draft").value = ""; notify(taskId ? "Your task has been updated." : "Added to your list.");
     }, true);
   } catch (error) { errorAt("form-error", message(error)); }
@@ -180,7 +184,7 @@ confirmation.addEventListener("cancel", event => { event.preventDefault(); cance
 editor.addEventListener("cancel", event => { if (busy) event.preventDefault(); });
 document.querySelectorAll<HTMLButtonElement>("[data-close]").forEach(button => button.addEventListener("click", () => {
   if (busy) return;
-  if (button.dataset.close === "confirmation") cancelConfirmation(); else editor.close();
+  if (button.dataset.close === "confirmation") cancelConfirmation(); else el<HTMLDialogElement>(button.dataset.close!).close();
 }));
 document.querySelectorAll<HTMLButtonElement>("[data-view]").forEach(button => button.addEventListener("click", () => {
   view = button.dataset.view!;
@@ -190,13 +194,47 @@ document.querySelectorAll<HTMLButtonElement>("[data-view]").forEach(button => bu
 el("add").addEventListener("click", () => openEditor());
 el("refresh").addEventListener("click", () => void refresh());
 repeat.addEventListener("change", scheduleFields);
-el("quick-add").addEventListener("submit", event => {
+el("quick-add").addEventListener("submit", async event => {
   event.preventDefault(); const draft = el<HTMLInputElement>("draft").value.trim();
-  if (draft) openEditor(null, draft); else notify("Enter a task to get started.");
+  if (!draft || aiBusy) return;
+  aiBusy = true; el<HTMLButtonElement>("send").disabled = true; el<HTMLButtonElement>("new-conversation").disabled = true;
+  el("send").textContent = "Thinking…"; el("assistant-response").textContent = "Thinking on your device. Your reminders are still running.";
+  try {
+    const response = await api<AssistantReply>("/api/assistant/chat", "POST", {message: draft, session_id: aiSession}, 100000);
+    aiSession = response.session_id; el<HTMLInputElement>("draft").value = "";
+    el("assistant-response").textContent = response.message;
+    for (const dialog of [editor, confirmation]) {
+      if (dialog.open) await new Promise<void>(resolve => dialog.addEventListener("close", () => resolve(), { once: true }));
+    }
+    if (response.kind === "proposal") {
+      openConfirmation("Review your assistant’s proposal", response.summary || [], response.action === "delete" ? "Delete task" : "Confirm", async () => {
+        const saved = await api<AssistantReply>("/api/assistant/confirm", "POST", {session_id: aiSession, proposal_id: response.proposal_id});
+        notify(saved.message);
+      });
+    } else {
+      el("answer-message").textContent = response.message;
+      el<HTMLDialogElement>("assistant-answer").showModal();
+    }
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 410) aiSession = null;
+    el("assistant-response").textContent = message(error);
+    el("answer-message").textContent = message(error);
+    el<HTMLDialogElement>("assistant-answer").showModal();
+  } finally {
+    aiBusy = false; el<HTMLButtonElement>("send").disabled = false; el<HTMLButtonElement>("new-conversation").disabled = false; el("send").textContent = "Send";
+    void checkAi();
+  }
 });
+el("new-conversation").addEventListener("click", () => { aiSession = null; notify("New conversation started."); });
+el("reply-assistant").addEventListener("click", () => { el<HTMLDialogElement>("assistant-answer").close(); el("draft").focus(); });
+async function checkAi(): Promise<void> {
+  try { const status = await api<{available:boolean}>("/api/assistant/status"); el("ai-status").textContent = status.available ? "● Local AI ready" : "○ AI offline · Add task still works"; }
+  catch { el("ai-status").textContent = "○ AI unavailable · Add task still works"; }
+}
 el("talk").addEventListener("click", () => {
   el("assistant-response").textContent = "Voice input is not connected yet. Type a task below to get started; your microphone stays off.";
 });
 tick(); el("task-list").append(text("p", "Gathering your tasks…", "empty")); void refresh();
 const refreshReminders = startReminders(() => timezone, refresh);
+void checkAi();
 setInterval(() => { tick(); if (!editor.open && !confirmation.open && !document.hidden) void refresh(); }, 60000);

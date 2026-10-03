@@ -9,12 +9,12 @@ export class ApiError extends Error {
   constructor(public status: number, message: string) { super(message); }
 }
 
-export async function api<T>(path: string, method = "GET", body?: unknown): Promise<T> {
+export async function api<T>(path: string, method = "GET", body?: unknown, timeout = 10000): Promise<T> {
   let response: Response;
   try {
     response = await fetch(path, {
       method, headers: body === undefined ? {} : { "Content-Type": "application/json" },
-      body: body === undefined ? undefined : JSON.stringify(body), signal: AbortSignal.timeout(10000),
+      body: body === undefined ? undefined : JSON.stringify(body), signal: AbortSignal.timeout(timeout),
     });
   } catch {
     throw new Error(method === "GET" ? "Cannot reach your desk service. Check the connection and refresh." : "The connection was interrupted. Refresh your list before retrying; the change may have been saved.");

@@ -11,6 +11,8 @@ from .tasks.api import task_router
 from .tasks.store import TaskStore
 from .tasks.preview import router as schedule_router
 from .reminders import ReminderScheduler, ReminderStore, reminder_router
+from .ai.model import LanguageModel, LlamaCppModel
+from .ai.service import Assistant, assistant_router
 
 
 class HealthResponse(BaseModel):
@@ -19,7 +21,7 @@ class HealthResponse(BaseModel):
     timezone: str
 
 
-def create_app(settings: Settings | None = None, frontend_dir: Path | None = None) -> FastAPI:
+def create_app(settings: Settings | None = None, frontend_dir: Path | None = None, language_model: LanguageModel | None = None) -> FastAPI:
     settings = settings or Settings()
     store = TaskStore(settings.database_path, settings.timezone)
     reminders = ReminderStore(store)
@@ -40,6 +42,7 @@ def create_app(settings: Settings | None = None, frontend_dir: Path | None = Non
     app.include_router(task_router(store))
     app.include_router(schedule_router)
     app.include_router(reminder_router(reminders, scheduler))
+    app.include_router(assistant_router(Assistant(store, settings, language_model or LlamaCppModel(settings))))
 
     @app.get("/api/health", response_model=HealthResponse)
     def health() -> HealthResponse:

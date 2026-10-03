@@ -9,7 +9,7 @@ Open `http://127.0.0.1:8000/` after running `scripts/start.ps1`. Build frontend 
 - **All** includes every task. The application loads all result pages, so the first 100 tasks are not a hidden limit.
 - **Add task** opens the title, notes, schedule, and time-zone form. Tap a task title to edit it. Review the exact title and schedule before saving. Use Back to edit or Cancel to discard the pending action.
 - Tap the circle to complete a task, or × to delete it. Each action presents a confirmation. Deletion permanently removes the task and its history.
-- The bottom input starts a typed task draft. Its text is copied to the title and displayed back for clarification; dates and instructions are **not interpreted by AI yet**. Select the intended schedule in the form.
+- The bottom input sends a typed request to the local AI. It proposes task changes or asks for clarification; review and confirm before saving. AI status and New conversation remain accessible on narrow screens. See [offline AI setup](offline-ai.md).
 - **Talk** is marked unavailable. The microphone is never opened, and no recording or transcript is fabricated. The response panel and microphone-off indicator reserve space for the later voice milestone.
 
 Task times and list dates use the service's configured time zone, not the browser's zone. Existing tasks retain their own recurrence zone. A changed schedule resets the next occurrence; editing only the title/notes preserves it. Completed tasks allow title/notes edits but not rescheduling.
@@ -24,4 +24,4 @@ Forms and review dialogs support keyboard navigation, native focus trapping, Esc
 
 Backend tests cover schedule conversion in Chicago and Kolkata, the fall-back overlap, nonexistent spring-forward times, invalid zones, and preview-without-saving behavior. Existing task API and persistence tests remain in place.
 
-Manual browser acceptance checks: 800 × 480 dashboard and scrolling form, typed draft → review → save, recurring completion → Upcoming, notes-only edit preserving the next date, delete confirmation cancellation, and a narrow viewport. Re-run these after interface changes; actual DSI touch hardware is validated on the Pi.
+Manual browser acceptance checks: 800 × 480 dashboard and scrolling form, typed AI request → review → save, recurring completion → Upcoming, notes-only edit preserving the next date, delete confirmation cancellation, and a narrow viewport. Re-run these after interface changes; actual DSI touch hardware is validated on the Pi.

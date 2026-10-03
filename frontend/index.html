@@ -35,13 +35,14 @@
           <span class="eyebrow">A MOMENT OF FOCUS</span>
           <h2>One thing at a time.</h2>
           <div class="next"><span class="muted">Next scheduled task</span><p id="next-task">Checking your list…</p><span class="muted">Desk reminders are active while the service runs.</span></div>
-          <p id="assistant-response" role="status">Type a task below, then choose its schedule.</p>
+          <p id="assistant-response" role="status">Ask me to add, change, complete, or find a task.</p>
           <span id="voice-state" class="voice-state">○ Microphone off · voice coming later</span>
         </aside>
       </div>
+      <div class="ai-controls"><span id="ai-status" class="muted">Checking local AI…</span><button id="new-conversation" class="quiet">New conversation</button></div>
       <footer>
         <button id="talk" class="talk" aria-disabled="true" aria-describedby="voice-state">● Talk</button>
-        <form id="quick-add"><label class="sr-only" for="draft">Type a task</label><input id="draft" maxlength="200" placeholder="What would you like to get done?" autocomplete="off" required /><button class="primary" type="submit">Review</button></form>
+        <form id="quick-add"><label class="sr-only" for="draft">Ask your assistant</label><input id="draft" maxlength="1000" placeholder="Try: Remind me to call Sam tomorrow at 3 PM" autocomplete="off" required /><button id="send" class="primary" type="submit">Send</button></form>
       </footer>
       <div id="toast" role="status" class="toast" hidden></div>
     </main>
@@ -63,6 +64,11 @@
       <div class="dialog-header"><h2 id="confirmation-title">Review your task</h2><button type="button" class="close" data-close="confirmation" aria-label="Close confirmation">×</button></div>
       <div class="dialog-body"><div id="summary"></div><p id="confirmation-error" class="error" role="alert" hidden></p></div>
       <div class="dialog-footer"><button id="back" type="button">Back</button><button id="confirm" class="primary" type="button">Save task</button></div>
+    </dialog>
+    <dialog id="assistant-answer" aria-labelledby="answer-title">
+      <div class="dialog-header"><h2 id="answer-title">Your assistant</h2><button type="button" class="close" data-close="assistant-answer" aria-label="Close assistant response">×</button></div>
+      <div class="dialog-body"><p id="answer-message" class="conversation-text"></p></div>
+      <div class="dialog-footer"><button id="reply-assistant" class="primary" type="button">Reply</button></div>
     </dialog>
     <script type="module" src="/src/main.ts"></script>
   </body>

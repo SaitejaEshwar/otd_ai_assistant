@@ -2,9 +2,9 @@
 
 A personal offline task assistant, developed on Windows for eventual deployment to a Raspberry Pi 5, 5-inch touchscreen, and AI HAT+ 2.
 
-## Current milestone: reliable reminders
+## Current milestone: offline AI on Windows
 
-Includes an 800 × 480 touchscreen dashboard, reviewed task forms, typed drafts, SQLite task storage, one-time/daily/weekly schedules, and persistent visual reminders with Done, Snooze, and Dismiss controls. Voice capture/transcription and language models are not implemented yet; the talk control is visibly unavailable. No cloud service or API key is required. See the [reminder guide](docs/reminders.md), [touchscreen guide](docs/touchscreen-interface.md), and [task API guide](docs/task-management.md).
+Includes an 800 × 480 touchscreen dashboard, reviewed task forms, local typed AI conversations, SQLite task storage, one-time/daily/weekly schedules, and persistent visual reminders with Done, Snooze, and Dismiss controls. Qwen runs locally through llama.cpp with confirmation before task changes. Voice capture/transcription remains pending; the talk control is unavailable. No cloud service or API key is required. See the [reminder guide](docs/reminders.md), [touchscreen guide](docs/touchscreen-interface.md), and [task API guide](docs/task-management.md).
 
 ## Windows setup
 
@@ -77,3 +77,7 @@ pyproject.toml             Python dependencies and package metadata
 ## Raspberry Pi target
 
 The application and frontend are shared across platforms. Pi installation scripts, Hailo adapters, kiosk startup, and hardware validation belong to the deployment milestone. Install native dependencies on the Pi; do not copy Windows `.venv` or `node_modules`. Future AI adapters will keep Windows and Hailo runtimes separate from task logic.
+
+## Offline AI on Windows
+
+Typed task conversations now use a local Qwen model. Follow [offline AI setup](docs/offline-ai.md) to download and start the separate model server. Task changes require confirmation; manual tasks and reminders continue without the AI server. Voice input remains a later milestone.

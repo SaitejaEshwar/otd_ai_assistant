@@ -128,9 +128,11 @@ class TaskStore:
             ).fetchall()
             return [task_from_row(row) for row in rows]
 
-    def update(self, task_id: str, payload: TaskPatch, now: datetime) -> Task:
+    def update(self, task_id: str, payload: TaskPatch, now: datetime, expected_updated_at: datetime | None = None) -> Task:
         with self.connection(write=True) as db:
             task = self.require(db, task_id)
+            if expected_updated_at is not None and task.updated_at != expected_updated_at:
+                raise TaskConflict("Task changed; review it again before saving")
             schedule = task.schedule
             due = task.next_due_at
             if "schedule" in payload.model_fields_set:
@@ -182,7 +184,9 @@ class TaskStore:
                 "SELECT * FROM completions WHERE task_id = ? ORDER BY completed_at DESC, id", (task_id,)
             )]
 
-    def delete(self, task_id: str) -> None:
+    def delete(self, task_id: str, expected_updated_at: datetime | None = None) -> None:
         with self.connection(write=True) as db:
-            self.require(db, task_id)
+            task = self.require(db, task_id)
+            if expected_updated_at is not None and task.updated_at != expected_updated_at:
+                raise TaskConflict("Task changed; review it again before deleting")
             db.execute("DELETE FROM tasks WHERE id = ?", (task_id,))

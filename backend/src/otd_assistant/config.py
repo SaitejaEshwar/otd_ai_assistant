@@ -1,5 +1,6 @@
 from pathlib import Path
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+from urllib.parse import urlsplit
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -16,6 +17,17 @@ class Settings(BaseSettings):
     timezone: str = "America/Chicago"
     database_path: Path = PROJECT_ROOT / "data" / "tasks.sqlite3"
     reminders_enabled: bool = True
+    ai_url: str = "http://127.0.0.1:8081"
+    ai_model: str = "otd-qwen"
+    ai_timeout_seconds: float = Field(default=90, ge=1, le=300)
+
+    @field_validator("ai_url")
+    @classmethod
+    def local_ai_only(cls, value: str) -> str:
+        url = urlsplit(value)
+        if url.scheme != "http" or url.hostname not in {"127.0.0.1", "localhost", "::1"} or url.username or url.password or url.query or url.fragment or url.path not in ("", "/"):
+            raise ValueError("AI endpoint must be a local HTTP origin without credentials")
+        return value.rstrip("/")
 
     @field_validator("database_path")
     @classmethod

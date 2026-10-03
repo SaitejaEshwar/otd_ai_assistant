@@ -2,6 +2,8 @@ from datetime import UTC, datetime
 from typing import Annotated, Literal
 from uuid import UUID
 
+from pydantic import AwareDatetime
+
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 
 from .models import Completion, CompletionRequest, Task, TaskCreate, TaskPatch
@@ -42,8 +44,8 @@ def task_router(store: TaskStore) -> APIRouter:
         return require_action(store.get, str(task_id))
 
     @router.patch("/{task_id}", response_model=Task)
-    def update(task_id: UUID, payload: TaskPatch, now: clock):
-        return require_action(store.update, str(task_id), payload, now)
+    def update(task_id: UUID, payload: TaskPatch, now: clock, expected_updated_at: AwareDatetime | None = Query(default=None)):
+        return require_action(store.update, str(task_id), payload, now, expected_updated_at)
 
     @router.post("/{task_id}/complete", response_model=Task)
     def complete(task_id: UUID, payload: CompletionRequest, now: clock):
@@ -54,8 +56,8 @@ def task_router(store: TaskStore) -> APIRouter:
         return require_action(store.completions, str(task_id))
 
     @router.delete("/{task_id}", status_code=204)
-    def delete(task_id: UUID):
-        require_action(store.delete, str(task_id))
+    def delete(task_id: UUID, expected_updated_at: AwareDatetime | None = Query(default=None)):
+        require_action(store.delete, str(task_id), expected_updated_at)
         return Response(status_code=204)
 
     return router

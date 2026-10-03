@@ -10,6 +10,7 @@ node_modules/
 dist/
 data/
 models/
+runtime/
 recordings/
 *.log
 .DS_Store

@@ -41,6 +41,9 @@ h2 { font-size: 15px; margin: 0; }
 .next p { font-size: 12px; line-height: 1.5; margin: 5px 0; overflow-wrap: anywhere; }
 .next > .muted:last-child { font-size: 10px; }
 #assistant-response { font-size: 12px; line-height: 1.45; margin: 0; }
+.conversation-text { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6; }
+#ai-status { font-size: 11px; }
+.ai-controls { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-shrink: 0; }
 .voice-state { font-size: 10px; color: #65725d; margin-top: auto; }
 footer { display: flex; gap: 10px; padding-top: 10px; border-top: 1px solid #d9dfd2; flex-shrink: 0; }
 .talk { background: #e6e9df; border: 0; color: #697464; min-width: 96px; }

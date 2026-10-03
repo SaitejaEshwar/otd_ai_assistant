@@ -81,3 +81,5 @@ The database is created at application startup. `OTD_DATABASE_PATH` defaults to 
 Writes use SQLite transactions; completing and advancing a repeating task happens atomically. Connections close after every operation. To back up or transfer data, stop the application, copy the SQLite file, then restart. Both Windows and Pi use the same schema. Keep personal task data out of Git; the default `data/` directory is ignored. If you configure a path elsewhere inside the repository, add that location to `.gitignore`.
 
 The reminder scheduler scans due tasks independently. Completing a task also retires its pending reminder in the same transaction. Replacing/removing a schedule cancels its old alert and starts a new schedule generation; deleting a task removes its reminder history. See [reminder behavior](reminders.md).
+
+Manual PATCH and DELETE accept an optional `expected_updated_at` query parameter (the last fetched aware timestamp, URL-encoded). The dashboard always sends it; stale requests return 409 without changing data. Omission retains unconditional API behavior for existing clients. Complete continues to require its token in the JSON body.
