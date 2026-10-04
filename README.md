@@ -2,9 +2,9 @@
 
 A personal offline task assistant, developed on Windows for eventual deployment to a Raspberry Pi 5, 5-inch touchscreen, and AI HAT+ 2.
 
-## Current milestone: offline AI on Windows
+## Current milestone: offline voice input
 
-Includes an 800 × 480 touchscreen dashboard, reviewed task forms, local typed AI conversations, SQLite task storage, one-time/daily/weekly schedules, and persistent visual reminders with Done, Snooze, and Dismiss controls. Qwen runs locally through llama.cpp with confirmation before task changes. Voice capture/transcription remains pending; the talk control is unavailable. No cloud service or API key is required. See the [reminder guide](docs/reminders.md), [touchscreen guide](docs/touchscreen-interface.md), and [task API guide](docs/task-management.md).
+Includes an 800 × 480 touchscreen dashboard, reviewed task forms, local typed AI conversations, SQLite task storage, one-time/daily/weekly schedules, and persistent visual reminders with Done, Snooze, and Dismiss controls. Qwen runs locally through llama.cpp with confirmation before task changes. Tap Talk to record English speech, then Stop to transcribe locally with Whisper. Review the editable transcript before Send. See [voice setup](docs/offline-voice.md). No cloud service or API key is required. See the [reminder guide](docs/reminders.md), [touchscreen guide](docs/touchscreen-interface.md), and [task API guide](docs/task-management.md).
 
 ## Windows setup
 

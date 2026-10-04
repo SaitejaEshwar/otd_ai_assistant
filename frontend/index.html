@@ -36,12 +36,12 @@
           <h2>One thing at a time.</h2>
           <div class="next"><span class="muted">Next scheduled task</span><p id="next-task">Checking your list…</p><span class="muted">Desk reminders are active while the service runs.</span></div>
           <p id="assistant-response" role="status">Ask me to add, change, complete, or find a task.</p>
-          <span id="voice-state" class="voice-state">○ Microphone off · voice coming later</span>
         </aside>
       </div>
       <div class="ai-controls"><span id="ai-status" class="muted">Checking local AI…</span><button id="new-conversation" class="quiet">New conversation</button></div>
+      <div class="voice-controls"><span id="voice-state" role="status">Microphone off</span><button id="cancel-voice" type="button" hidden>Cancel recording</button></div>
       <footer>
-        <button id="talk" class="talk" aria-disabled="true" aria-describedby="voice-state">● Talk</button>
+        <button id="talk" class="talk" aria-pressed="false" aria-describedby="voice-state">● Talk</button>
         <form id="quick-add"><label class="sr-only" for="draft">Ask your assistant</label><input id="draft" maxlength="1000" placeholder="Try: Remind me to call Sam tomorrow at 3 PM" autocomplete="off" required /><button id="send" class="primary" type="submit">Send</button></form>
       </footer>
       <div id="toast" role="status" class="toast" hidden></div>

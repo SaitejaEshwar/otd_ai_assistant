@@ -10,7 +10,7 @@ Open `http://127.0.0.1:8000/` after running `scripts/start.ps1`. Build frontend 
 - **Add task** opens the title, notes, schedule, and time-zone form. Tap a task title to edit it. Review the exact title and schedule before saving. Use Back to edit or Cancel to discard the pending action.
 - Tap the circle to complete a task, or × to delete it. Each action presents a confirmation. Deletion permanently removes the task and its history.
 - The bottom input sends a typed request to the local AI. It proposes task changes or asks for clarification; review and confirm before saving. AI status and New conversation remain accessible on narrow screens. See [offline AI setup](offline-ai.md).
-- **Talk** is marked unavailable. The microphone is never opened, and no recording or transcript is fabricated. The response panel and microphone-off indicator reserve space for the later voice milestone.
+- **Talk** starts microphone capture after browser permission. Tap Stop to transcribe locally, or Cancel recording to discard. Review/edit the transcript before Send; task changes still require confirmation. See [voice input](offline-voice.md).
 
 Task times and list dates use the service's configured time zone, not the browser's zone. Existing tasks retain their own recurrence zone. A changed schedule resets the next occurrence; editing only the title/notes preserves it. Completed tasks allow title/notes edits but not rescheduling.
 

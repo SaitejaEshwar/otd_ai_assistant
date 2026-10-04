@@ -1,4 +1,5 @@
 import "./style.css";
+import { startVoice } from "./voice";
 import { startReminders } from "./reminders";
 import { ApiError, api, allTasks, type Task, type TaskInput, type Schedule } from "./api";
 
@@ -196,7 +197,7 @@ el("refresh").addEventListener("click", () => void refresh());
 repeat.addEventListener("change", scheduleFields);
 el("quick-add").addEventListener("submit", async event => {
   event.preventDefault(); const draft = el<HTMLInputElement>("draft").value.trim();
-  if (!draft || aiBusy) return;
+  if (!draft || aiBusy || voiceBusy()) return;
   aiBusy = true; el<HTMLButtonElement>("send").disabled = true; el<HTMLButtonElement>("new-conversation").disabled = true;
   el("send").textContent = "Thinking…"; el("assistant-response").textContent = "Thinking on your device. Your reminders are still running.";
   try {
@@ -231,9 +232,8 @@ async function checkAi(): Promise<void> {
   try { const status = await api<{available:boolean}>("/api/assistant/status"); el("ai-status").textContent = status.available ? "● Local AI ready" : "○ AI offline · Add task still works"; }
   catch { el("ai-status").textContent = "○ AI unavailable · Add task still works"; }
 }
-el("talk").addEventListener("click", () => {
-  el("assistant-response").textContent = "Voice input is not connected yet. Type a task below to get started; your microphone stays off.";
-});
+const voiceBusy = startVoice(() => aiBusy);
+
 tick(); el("task-list").append(text("p", "Gathering your tasks…", "empty")); void refresh();
 const refreshReminders = startReminders(() => timezone, refresh);
 void checkAi();

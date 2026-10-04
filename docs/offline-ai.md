@@ -1,6 +1,6 @@
 # Offline AI on Windows
 
-The typed assistant runs Qwen2.5-Instruct 1.5B (Q4_K_M GGUF) in llama.cpp on the CPU. Task data stays on this computer. Internet is needed for the initial download, then neither chat nor reminders requires it. Microphone input is not implemented yet.
+The typed assistant runs Qwen2.5-Instruct 1.5B (Q4_K_M GGUF) in llama.cpp on the CPU. Task data stays on this computer. Internet is needed for the initial download, then neither chat nor reminders requires it. Microphone input is available through [offline voice](offline-voice.md).
 
 ## Install and start
 
@@ -29,13 +29,13 @@ Open http://127.0.0.1:8000. Restart the backend and rebuild the frontend after u
 
 ## Try it
 
-- “Remind me to call Sam tomorrow at 3 PM.” Review, then Confirm.
-- “Move that to Saturday at 10 AM.” Review the revised schedule.
-- “What do I have coming up?” Reads actual stored tasks.
-- “Remind me to take a walk tomorrow.” Answer the time question with “At 9 AM.”
-- “Complete call Sam” or “Delete call Sam.” Both require confirmation.
+- â€œRemind me to call Sam tomorrow at 3 PM.â€ Review, then Confirm.
+- â€œMove that to Saturday at 10 AM.â€ Review the revised schedule.
+- â€œWhat do I have coming up?â€ Reads actual stored tasks.
+- â€œRemind me to take a walk tomorrow.â€ Answer the time question with â€œAt 9 AM.â€
+- â€œComplete call Samâ€ or â€œDelete call Sam.â€ Both require confirmation.
 
-Use explicit AM/PM, HH:MM, noon or midnight. Relative calendar dates use the configured local time zone. The small model can misunderstand complex language; always inspect the proposal. Use Add task for unsupported phrasing, ambiguous task names, complex edits, or when the model is unavailable. One task action per message is supported. Lists show up to 100 matches. Voice, general knowledge chat, automatic model startup and Pi/Hailo acceleration are outside this milestone.
+Use explicit AM/PM, HH:MM, noon or midnight. Relative calendar dates use the configured local time zone. The small model can misunderstand complex language; always inspect the proposal. Use Add task for unsupported phrasing, ambiguous task names, complex edits, or when the model is unavailable. One task action per message is supported. Lists show up to 100 matches. General knowledge chat, automatic model startup and Pi/Hailo acceleration are outside this milestone.
 
 ## Reliability
 

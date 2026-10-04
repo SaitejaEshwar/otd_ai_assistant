@@ -91,3 +91,6 @@ textarea { resize: vertical; }
 @media (max-width: 500px) { .reminder-row { flex-wrap: wrap; } .reminder-details { flex-basis: 100%; } }
 @media (max-width: 650px) { #app { padding: 12px; } .workspace { grid-template-columns: 1fr; } .assistant-panel { display: none; } h1 { font-size: 21px; } .tabs button { padding: 8px; } .toolbar { gap: 4px; } #add { padding: 8px; } .clock { font-size: 10px; } .talk { min-width: 60px; padding: 8px; } }
 @media (max-width: 390px) { .clock { display: none; } .tabs button { font-size: 12px; padding: 7px; } }
+
+.voice-controls { display:flex; align-items:center; justify-content:space-between; gap:8px; flex-shrink:0; font-size:12px; }
+#talk[aria-pressed="true"] { background:#93462e; color:white; }

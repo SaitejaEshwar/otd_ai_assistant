@@ -11,6 +11,7 @@ from .tasks.api import task_router
 from .tasks.store import TaskStore
 from .tasks.preview import router as schedule_router
 from .reminders import ReminderScheduler, ReminderStore, reminder_router
+from .voice import voice_router
 from .ai.model import LanguageModel, LlamaCppModel
 from .ai.service import Assistant, assistant_router
 
@@ -40,6 +41,7 @@ def create_app(settings: Settings | None = None, frontend_dir: Path | None = Non
 
     app = FastAPI(title="On the Desk AI Assistant", version="0.1.0", lifespan=lifespan)
     app.include_router(task_router(store))
+    app.include_router(voice_router())
     app.include_router(schedule_router)
     app.include_router(reminder_router(reminders, scheduler))
     app.include_router(assistant_router(Assistant(store, settings, language_model or LlamaCppModel(settings))))
