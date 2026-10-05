@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Literal
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from urllib.parse import urlsplit
 
@@ -19,6 +20,7 @@ class Settings(BaseSettings):
     reminders_enabled: bool = True
     ai_url: str = "http://127.0.0.1:8081"
     ai_model: str = "otd-qwen"
+    ai_backend: Literal["llama_cpp", "hailo_ollama"] = "llama_cpp"
     ai_timeout_seconds: float = Field(default=90, ge=1, le=300)
 
     @field_validator("ai_url")

@@ -1,7 +1,8 @@
-﻿"""Bounded local WAV transcription; audio is deleted after processing."""
+"""Bounded local WAV transcription; audio is deleted after processing."""
 import asyncio
 from array import array
 import io
+import os
 from pathlib import Path
 import subprocess
 import tempfile
@@ -36,14 +37,16 @@ class Whisper:
         self.root = root
 
     def executable(self):
-        return next((self.root / 'runtime' / 'whisper').rglob('whisper-cli.exe'), None)
+        name = 'whisper-cli.exe' if os.name == 'nt' else 'whisper-cli'
+        return next((path for path in sorted((self.root / 'runtime' / 'whisper').rglob(name))
+                     if path.is_file() and (os.name == 'nt' or os.access(path, os.X_OK))), None)
 
     def available(self):
         return self.executable() is not None and (self.root / 'models' / 'ggml-base.en.bin').is_file()
 
     def transcribe(self, data: bytes):
         if not self.available():
-            raise HTTPException(503, 'Voice is not installed. Run scripts/setup_voice.py and restart the service.')
+            raise HTTPException(503, 'Voice is not installed. Follow the voice setup instructions for your operating system and restart the service.')
         with tempfile.TemporaryDirectory(prefix='otd-voice-') as directory:
             source = Path(directory) / 'speech.wav'
             output = Path(directory) / 'transcript'

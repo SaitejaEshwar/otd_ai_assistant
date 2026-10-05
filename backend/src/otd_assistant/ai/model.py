@@ -67,3 +67,48 @@ class LlamaCppModel:
                 return Intent.model_validate(json.loads(choice["message"]["content"]))
         except (httpx.HTTPError, ValueError, KeyError, IndexError, TypeError) as exc:
             raise ModelUnavailable("The local AI is unavailable or returned an invalid response. Check that the model server is running, or use Add task.") from exc
+
+
+class HailoOllamaModel:
+    """Hailo 5.1.1 transport; JSON is validated locally, not grammar-enforced."""
+
+    def __init__(self, settings: Settings):
+        self.settings = settings
+
+    async def available(self) -> bool:
+        try:
+            async with httpx.AsyncClient(trust_env=False, timeout=2) as client:
+                response = await client.get(self.settings.ai_url + "/api/tags")
+                response.raise_for_status()
+                models = response.json()["models"]
+                return any(isinstance(model, dict) and
+                           model.get("name", model.get("model")) == self.settings.ai_model
+                           for model in models)
+        except (httpx.HTTPError, ValueError, KeyError, TypeError):
+            return False
+
+    async def interpret(self, messages: list[dict[str, str]]) -> Intent:
+        instructions = (
+            "Return exactly one JSON object matching this schema. Include all required keys; "
+            "use null for unspecified values. No Markdown or surrounding prose. "
+            "Interpret the user's task request; never claim to execute it. Schema: "
+            + json.dumps(Intent.model_json_schema())
+        )
+        # Keep one system message for models whose chat template requires it.
+        prepared = [dict(message) for message in messages]
+        if prepared and prepared[0]["role"] == "system":
+            prepared[0]["content"] += "\n" + instructions
+        else:
+            prepared.insert(0, {"role": "system", "content": instructions})
+        try:
+            async with httpx.AsyncClient(trust_env=False, timeout=self.settings.ai_timeout_seconds) as client:
+                response = await client.post(self.settings.ai_url + "/api/chat", json={
+                    "model": self.settings.ai_model, "messages": prepared, "stream": False,
+                })
+                response.raise_for_status()
+                data = response.json()
+                if data["done"] is not True or data.get("done_reason") != "stop":
+                    raise ValueError("Incomplete model response")
+                return Intent.model_validate(json.loads(data["message"]["content"]))
+        except (httpx.HTTPError, ValueError, KeyError, TypeError) as exc:
+            raise ModelUnavailable("The local AI is unavailable or returned an invalid response. Check that the model server is running, or use Add task.") from exc

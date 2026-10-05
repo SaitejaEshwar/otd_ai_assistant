@@ -82,3 +82,21 @@ def test_busy_transcription_does_not_block_status(setup):
         assert c.get('/api/voice/status').status_code==200
         assert c.post('/api/voice/transcribe',content=audio(),headers={'content-type':'audio/wav'}).status_code==429
     finally: release.set();worker.join()
+
+@pytest.mark.parametrize('platform,filename', [('nt','whisper-cli.exe'),('posix','whisper-cli')])
+def test_voice_runtime_platform_selection(tmp_path,monkeypatch,platform,filename):
+    from types import SimpleNamespace
+    from otd_assistant import voice
+    runtime=tmp_path/'runtime'/'whisper'/'build'/'bin';runtime.mkdir(parents=True)
+    (runtime/'whisper-cli.exe').touch();(runtime/'whisper-cli').touch()
+    monkeypatch.setattr(voice,'os',SimpleNamespace(name=platform,X_OK=1,access=lambda path,mode:True))
+    assert Whisper(tmp_path).executable()==runtime/filename
+
+
+def test_linux_voice_requires_executable_file(tmp_path,monkeypatch):
+    from types import SimpleNamespace
+    from otd_assistant import voice
+    runtime=tmp_path/'runtime'/'whisper';runtime.mkdir(parents=True)
+    (runtime/'whisper-cli').touch()
+    monkeypatch.setattr(voice,'os',SimpleNamespace(name='posix',X_OK=1,access=lambda path,mode:False))
+    assert Whisper(tmp_path).executable() is None
