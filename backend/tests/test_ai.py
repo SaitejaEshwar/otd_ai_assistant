@@ -182,3 +182,17 @@ def test_manual_version_requires_timezone(setup):
     c,_=setup
     t=c.post('/api/tasks',json={'title':'Test'}).json()
     assert c.patch('/api/tasks/'+t['id'],params={'expected_updated_at':'2026-10-01T12:00'},json={'notes':'No'}).status_code==422
+
+@pytest.mark.parametrize('spoken,expected', [('6.50 pm','18:50'),('6.05 p.m.','18:05'),('6:50 PM','18:50'),('12.00 am','00:00'),('12.00 pm','12:00')])
+def test_transcribed_dot_times(setup,spoken,expected):
+    c,m=setup;m.value=intent(title='Windows hardware test',date='2026-10-01',time=None)
+    r=chat(c,f'Remind me to do the Windows hardware test today at {spoken}.')
+    assert r['kind']=='proposal'
+    assert f'T{expected}:00' in r['summary'][-1]
+    assert c.get('/api/tasks').json()==[]
+
+@pytest.mark.parametrize('spoken',['6.75 pm','16.50 pm','6.50','3K','6.5 pm'])
+def test_invalid_dot_times_do_not_match_partial_hour(setup,spoken):
+    c,m=setup;m.value=intent(title='Windows hardware test',date='2026-10-01',time='18:50')
+    r=chat(c,f'Remind me today at {spoken}')
+    assert r['kind']=='clarification'

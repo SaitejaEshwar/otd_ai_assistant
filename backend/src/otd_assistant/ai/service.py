@@ -135,7 +135,7 @@ class Assistant:
             if resolved_date and intent.action in {"create", "update"}:
                 intent.date = resolved_date.isoformat()
             # Only explicitly supplied clock times may enter a new reminder.
-            clocks = list(re.finditer(r"\b(1[0-2]|0?[1-9])(?::([0-5]\d))?\s*(a\.?m\.?|p\.?m\.?)\b", lowered))
+            clocks = list(re.finditer(r"(?<![\w.:])(1[0-2]|0?[1-9])(?:[.:]([0-5]\d))?\s*(a\.?m\.?|p\.?m\.?)\b", lowered))
             military = list(re.finditer(r"\b([01]?\d|2[0-3]):([0-5]\d)\b", lowered))
             explicit_time = None
             if clocks:

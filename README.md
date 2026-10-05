@@ -81,3 +81,5 @@ The application and frontend are shared across platforms. Pi installation script
 ## Offline AI on Windows
 
 Typed task conversations now use a local Qwen model. Follow [offline AI setup](docs/offline-ai.md) to download and start the separate model server. Task changes require confirmation; manual tasks and reminders continue without the AI server. Voice input remains a later milestone.
+
+Windows acceptance results and remaining physical checks: [acceptance report](docs/windows-acceptance.md).
